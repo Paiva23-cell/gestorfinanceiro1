@@ -13,3 +13,455 @@
     <script src="script.js"></script> <!-- Se você tiver um arquivo JavaScript -->
 </body>
 </html>
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle de Gastos Mensais</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        
+        :root {
+            --primary: #4f46e5;
+            --secondary: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f8fafc;
+        }
+        
+        .progress-ring__circle {
+            transition: stroke-dashoffset 0.35s;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+        
+        .category-marker {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary);
+        }
+        
+        .btn-secondary {
+            background-color: var(--secondary);
+        }
+        
+        .btn-danger {
+            background-color: var(--danger);
+        }
+        
+        .btn-warning {
+            background-color: var(--warning);
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.3s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-50">
+    <div class="container mx-auto px-4 py-8 max-w-6xl">
+        <header class="mb-8 text-center">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">Controle de Gastos Mensais</h1>
+            <p class="text-gray-600">Acompanhe seus gastos e mantenha suas finanças sob controle</p>
+            
+            <div class="mt-6 relative">
+                <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/d3b49147-9a66-4e9a-b37f-834b0c4f79f5.png" alt="Ilustração de gráficos financeiros e moedas em um fundo suave azul e verde, simbolizando controle financeiro e planejamento" class="rounded-lg shadow-md w-full h-64 object-cover">
+            </div>
+        </header>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Formulário de adição de gastos -->
+            <div class="lg:col-span-1 bg-white p-6 rounded-xl shadow-sm">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">Adicionar Gasto</h2>
+                
+                <form id="expenseForm" class="space-y-4">
+                    <div>
+                        <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
+                        <input type="text" id="description" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Ex: Compras de supermercado" required>
+                    </div>
+                    
+                    <div>
+                        <label for="category" class="block text-sm font-medium text-gray-700 mb-1">Categoria</label>
+                        <select id="category" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" required>
+                            <option value="">Selecione uma categoria</option>
+                            <option value="supermarket">Supermercado</option>
+                            <option value="utilities">Contas (Água/Luz/Internet)</option>
+                            <option value="leisure">Lazer/Futilidades</option>
+                            <option value="investments">Investimentos</option>
+                            <option value="children">Filhos</option>
+                            <option value="loans">Empréstimos</option>
+                            <option value="food">Alimentação</option>
+                            <option value="other">Outros gastos</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label for="amount" class="block text-sm font-medium text-gray-700 mb-1">Valor (R$)</label>
+                        <input type="number" id="amount" min="0.01" step="0.01" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Ex: 150.50" required>
+                    </div>
+                    
+                    <div>
+                        <label for="date" class="block text-sm font-medium text-gray-700 mb-1">Data</label>
+                        <input type="date" id="date" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" required>
+                    </div>
+                    
+                    <button type="submit" class="w-full bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 transition duration-200 flex items-center justify-center">
+                        <i class="fas fa-plus-circle mr-2"></i> Adicionar Gasto
+                    </button>
+                </form>
+            </div>
+            
+            <!-- Lista de gastos e resumo -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Resumo financeiro -->
+                <div class="bg-white p-6 rounded-xl shadow-sm">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4">Resumo Financeiro</h2>
+                    
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                        <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                            <p class="text-sm text-gray-500">Total Gasto</p>
+                            <p id="totalExpenses" class="text-2xl font-bold text-gray-800">R$ 0,00</p>
+                        </div>
+                        <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                            <p class="text-sm text-gray-500">Maior Gasto</p>
+                            <p id="highestExpense" class="text-2xl font-bold text-gray-800">R$ 0,00</p>
+                        </div>
+                        <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                            <p class="text-sm text-gray-500">Média Diária</p>
+                            <p id="dailyAverage" class="text-2xl font-bold text-gray-800">R$ 0,00</p>
+                        </div>
+                        <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                            <p class="text-sm text-gray-500">Total Itens</p>
+                            <p id="totalItems" class="text-2xl font-bold text-gray-800">0</p>
+                        </div>
+                    </div>
+                    
+                    <div class="h-64">
+                        <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/fd4c02a1-1662-437a-b1cc-4c3c9ede631d.png" alt="Gráfico estatístico mostrando a distribuição de gastos por categoria, com cores diferentes para supermercado, contas, lazer e outras categorias" class="w-full h-full object-contain rounded">
+                    </div>
+                </div>
+                
+                <!-- Filtros -->
+                <div class="bg-white p-4 rounded-xl shadow-sm">
+                    <div class="flex flex-wrap items-center gap-4">
+                        <div class="flex-1">
+                            <label for="filterCategory" class="block text-sm font-medium text-gray-700 mb-1">Filtrar por categoria</label>
+                            <select id="filterCategory" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                <option value="all">Todas categorias</option>
+                                <option value="supermarket">Supermercado</option>
+                                <option value="utilities">Contas (Água/Luz/Internet)</option>
+                                <option value="leisure">Lazer/Futilidades</option>
+                                <option value="investments">Investimentos</option>
+                                <option value="children">Filhos</option>
+                                <option value="loans">Empréstimos</option>
+                                <option value="food">Alimentação</option>
+                                <option value="other">Outros gastos</option>
+                            </select>
+                        </div>
+                        <div class="flex-1">
+                            <label for="filterDate" class="block text-sm font-medium text-gray-700 mb-1">Filtrar por mês</label>
+                            <input type="month" id="filterDate" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Lista de gastos -->
+                <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h2 class="text-xl font-semibold text-gray-800">Gastos Registrados</h2>
+                    </div>
+                    <div class="divide-y divide-gray-200">
+                        <div id="expenseList" class="divide-y divide-gray-200">
+                            <!-- Itens serão adicionados dinamicamente aqui -->
+                        </div>
+                    </div>
+                    <div class="px-6 py-4 bg-gray-50 text-right">
+                        <div class="flex justify-between items-center">
+                            <p class="text-gray-600">Gastos deste mês:</p>
+                            <p id="monthTotal" class="text-lg font-bold text-gray-800">R$ 0,00</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Distribuição por categoria -->
+                <div class="bg-white p-6 rounded-xl shadow-sm">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4">Distribuição por Categoria</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="flex flex-col justify-center items-center">
+                            <div class="relative w-48 h-48">
+                                <svg class="w-full h-full" viewBox="0 0 100 100">
+                                    <circle cx="50" cy="50" r="45" fill="none" stroke="#e5e7eb" stroke-width="10"/>
+                                    <circle cx="50" cy="50" r="45" fill="none" stroke="#4f46e5" stroke-width="10" stroke-dasharray="70 100" class="progress-ring__circle"/>
+                                    <circle cx="50" cy="50" r="45" fill="none" stroke="#10b981" stroke-width="10" stroke-dasharray="30 100" class="progress-ring__circle" stroke-dashoffset="30"/>
+                                    <text x="50" y="50" text-anchor="middle" dominant-baseline="central" class="text-sm font-bold fill-current text-gray-700"></text>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="space-y-4">
+                            <div class="flex items-center">
+                                <span class="category-marker bg-indigo-600"></span>
+                                <span class="text-gray-700">Supermercado</span>
+                                <span class="ml-auto font-medium">35%</span>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="category-marker bg-emerald-500"></span>
+                                <span class="text-gray-700">Contas</span>
+                                <span class="ml-auto font-medium">20%</span>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="category-marker bg-yellow-500"></span>
+                                <span class="text-gray-700">Lazer</span>
+                                <span class="ml-auto font-medium">15%</span>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="category-marker bg-red-500"></span>
+                                <span class="text-gray-700">Investimentos</span>
+                                <span class="ml-auto font-medium">10%</span>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="category-marker bg-blue-500"></span>
+                                <span class="text-gray-700">Outros</span>
+                                <span class="ml-auto font-medium">20%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const expenseForm = document.getElementById('expenseForm');
+            const expenseList = document.getElementById('expenseList');
+            const filterCategory = document.getElementById('filterCategory');
+            const filterDate = document.getElementById('filterDate');
+            
+            let expenses = JSON.parse(localStorage.getItem('expenses')) || [];
+            
+            // Configurar data inicial como o mês atual
+            const today = new Date();
+            const currentMonth = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0');
+            filterDate.value = currentMonth;
+            
+            // Formatar moeda
+            const formatCurrency = (value) => {
+                return new Intl.NumberFormat('pt-BR', { 
+                    style: 'currency', 
+                    currency: 'BRL' 
+                }).format(value);
+            };
+            
+            // Obter categoria formatada
+            const getCategoryName = (category) => {
+                const categories = {
+                    'supermarket': 'Supermercado',
+                    'utilities': 'Contas (Água/Luz/Internet)',
+                    'leisure': 'Lazer/Futilidades',
+                    'investments': 'Investimentos',
+                    'children': 'Filhos',
+                    'loans': 'Empréstimos',
+                    'food': 'Alimentação',
+                    'other': 'Outros gastos'
+                };
+                return categories[category] || category;
+            };
+            
+            // Obter cor da categoria
+            const getCategoryColor = (category) => {
+                const colors = {
+                    'supermarket': 'bg-indigo-600',
+                    'utilities': 'bg-emerald-500',
+                    'leisure': 'bg-yellow-500',
+                    'investments': 'bg-red-500',
+                    'children': 'bg-purple-500',
+                    'loans': 'bg-amber-600',
+                    'food': 'bg-blue-500',
+                    'other': 'bg-gray-500'
+                };
+                return colors[category] || 'bg-gray-500';
+            };
+            
+            // Obter ícone da categoria
+            const getCategoryIcon = (category) => {
+                const icons = {
+                    'supermarket': 'fa-cart-shopping',
+                    'utilities': 'fa-bolt-lightning',
+                    'leisure': 'fa-martini-glass',
+                    'investments': 'fa-chart-line',
+                    'children': 'fa-child',
+                    'loans': 'fa-money-bill-transfer',
+                    'food': 'fa-utensils',
+                    'other': 'fa-shapes'
+                };
+                return icons[category] || 'fa-circle-question';
+            };
+            
+            // Adicionar novo gasto
+            expenseForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const description = document.getElementById('description').value;
+                const category = document.getElementById('category').value;
+                const amount = parseFloat(document.getElementById('amount').value);
+                const date = document.getElementById('date').value;
+                
+                if (!description || !category || isNaN(amount) || !date) {
+                    alert('Por favor, preencha todos os campos corretamente.');
+                    return;
+                }
+                
+                const newExpense = {
+                    id: Date.now(),
+                    description,
+                    category,
+                    amount,
+                    date
+                };
+                
+                expenses.push(newExpense);
+                saveExpenses();
+                renderExpenses();
+                updateSummary();
+                
+                // Resetar formulário
+                expenseForm.reset();
+                document.getElementById('date').value = new Date().toISOString().split('T')[0];
+            });
+            
+            // Salvar gastos no localStorage
+            const saveExpenses = () => {
+                localStorage.setItem('expenses', JSON.stringify(expenses));
+            };
+            
+            // Renderizar lista de gastos
+            const renderExpenses = () => {
+                const selectedCategory = filterCategory.value;
+                const selectedMonth = filterDate.value;
+                
+                // Filtrar por categoria e mês
+                let filteredExpenses = expenses.filter(expense => {
+                    const expenseDate = new Date(expense.date);
+                    const expenseMonth = expenseDate.getFullYear() + '-' + String(expenseDate.getMonth() + 1).padStart(2, '0');
+                    
+                    return (selectedCategory === 'all' || expense.category === selectedCategory) &&
+                           expenseMonth === selectedMonth;
+                });
+                
+                // Ordenar por data (mais recente primeiro)
+                filteredExpenses.sort((a, b) => new Date(b.date) - new Date(a.date));
+                
+                if (filteredExpenses.length === 0) {
+                    expenseList.innerHTML = `
+                        <div class="p-8 text-center text-gray-500">
+                            <i class="fas fa-receipt text-4xl mb-3"></i>
+                            <p class="text-lg">Nenhum gasto registrado para este período</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                expenseList.innerHTML = filteredExpenses.map(expense => `
+                    <div class="fade-in p-4 hover:bg-gray-50" data-id="${expense.id}">
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0 mr-4 mt-1 ${getCategoryColor(expense.category)} text-white rounded-full w-10 h-10 flex items-center justify-center">
+                                <i class="fas ${getCategoryIcon(expense.category)}"></i>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-gray-900 truncate">${expense.description}</p>
+                                <p class="text-sm text-gray-500">${getCategoryName(expense.category)} • ${new Date(expense.date).toLocaleDateString('pt-BR')}</p>
+                            </div>
+                            <div class="ml-4 flex flex-col items-end">
+                                <p class="text-lg font-semibold text-gray-900">${formatCurrency(expense.amount)}</p>
+                                <button class="delete-btn mt-1 text-xs text-red-600 hover:text-red-800" data-id="${expense.id}">
+                                    <i class="fas fa-trash mr-1"></i> Excluir
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+                
+                // Adicionar event listeners aos botões de exclusão
+                document.querySelectorAll('.delete-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const id = parseInt(this.getAttribute('data-id'));
+                        expenses = expenses.filter(expense => expense.id !== id);
+                        saveExpenses();
+                        renderExpenses();
+                        updateSummary();
+                    });
+                });
+                
+                // Calcular total do mês filtrado
+                updateMonthTotal(selectedMonth);
+            };
+            
+            // Atualizar total do mês
+            const updateMonthTotal = (month) => {
+                const monthExpenses = expenses.filter(expense => {
+                    const expenseDate = new Date(expense.date);
+                    const expenseMonth = expenseDate.getFullYear() + '-' + String(expenseDate.getMonth() + 1).padStart(2, '0');
+                    return expenseMonth === month;
+                });
+                
+                const total = monthExpenses.reduce((sum, expense) => sum + expense.amount, 0);
+                document.getElementById('monthTotal').textContent = formatCurrency(total);
+            };
+            
+            // Atualizar resumo
+            const updateSummary = () => {
+                if (expenses.length === 0) {
+                    document.getElementById('totalExpenses').textContent = 'R$ 0,00';
+                    document.getElementById('highestExpense').textContent = 'R$ 0,00';
+                    document.getElementById('dailyAverage').textContent = 'R$ 0,00';
+                    document.getElementById('totalItems').textContent = '0';
+                    return;
+                }
+                
+                const total = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+                const highest = Math.max(...expenses.map(expense => expense.amount));
+                const averagePerDay = total / expenses.length;
+                
+                document.getElementById('totalExpenses').textContent = formatCurrency(total);
+                document.getElementById('highestExpense').textContent = formatCurrency(highest);
+                document.getElementById('dailyAverage').textContent = formatCurrency(averagePerDay);
+                document.getElementById('totalItems').textContent = expenses.length;
+            };
+            
+            // Event listeners para filtros
+            filterCategory.addEventListener('change', renderExpenses);
+            filterDate.addEventListener('change', function() {
+                renderExpenses();
+                updateMonthTotal(this.value);
+            });
+            
+            // Data atual como padrão no campo de data
+            document.getElementById('date').value = new Date().toISOString().split('T')[0];
+            
+            // Renderizar inicialmente
+            renderExpenses();
+            updateSummary();
+        });
+    </script>
+</body>
+</html>
+
